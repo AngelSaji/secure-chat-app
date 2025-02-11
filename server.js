@@ -3,16 +3,14 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const crypto = require("crypto");
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
+    cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
-// Serve static files (frontend)
+// Serve static files
 app.use(express.static("public"));
 app.use(cors());
 
@@ -37,7 +35,7 @@ function decrypt(encryptedData) {
 
 io.on("connection", (socket) => {
     console.log("A user connected");
-    
+
     socket.on("chat message", (msg) => {
         const encryptedMsg = encrypt(msg);
         io.emit("chat message", encryptedMsg);
@@ -47,7 +45,7 @@ io.on("connection", (socket) => {
         console.log("User disconnected");
     });
 
-    // WebRTC Signaling
+    // WebRTC Signaling for Video/Audio Calls
     socket.on("offer", (data) => {
         socket.broadcast.emit("offer", data);
     });
@@ -61,6 +59,7 @@ io.on("connection", (socket) => {
     });
 });
 
-server.listen(3000, () => {
-    console.log("Server running on http://localhost:3000");
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
