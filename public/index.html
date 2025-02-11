@@ -1,22 +1,97 @@
+const fs = require('fs');
+const path = require('path');
+const publicDir = path.join(__dirname, 'public');
+if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir);
+}
+fs.writeFileSync(path.join(publicDir, 'index.html'), `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Chat & Video Call</title>
+    <title>Secure Chat App with Calls</title>
     <script src="/socket.io/socket.io.js"></script>
-    <script defer src="script.js"></script>
 </head>
 <body>
-    <h2>Secure Chat</h2>
     <ul id="messages"></ul>
     <form id="form">
         <input id="input" autocomplete="off" /><button>Send</button>
     </form>
-
-    <h2>Video Call</h2>
     <button id="startCall">Start Video Call</button>
+    <button id="startAudio">Start Audio Call</button>
     <video id="localVideo" autoplay playsinline></video>
     <video id="remoteVideo" autoplay playsinline></video>
+    
+    <script>
+        const socket = io();
+        const form = document.getElementById("form");
+        const input = document.getElementById("input");
+        const messages = document.getElementById("messages");
+        const startCallBtn = document.getElementById("startCall");
+        const startAudioBtn = document.getElementById("startAudio");
+        const localVideo = document.getElementById("localVideo");
+        const remoteVideo = document.getElementById("remoteVideo");
+
+        let peerConnection;
+        const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            if (input.value) {
+                socket.emit("chat message", { sender: "User", msg: input.value });
+                input.value = "";
+            }
+        });
+
+        socket.on("chat message", function ({ sender, content }) {
+            const item = document.createElement("li");
+            item.textContent = sender + ": " + content;
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+
+        startCallBtn.addEventListener("click", async () => {
+            startCommunication(true);
+        });
+
+        startAudioBtn.addEventListener("click", async () => {
+            startCommunication(false);
+        });
+
+        async function startCommunication(video) {
+            peerConnection = new RTCPeerConnection(config);
+            const stream = await navigator.mediaDevices.getUserMedia({ video, audio: true });
+            localVideo.srcObject = stream;
+            stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+
+            peerConnection.ontrack = (event) => {
+                remoteVideo.srcObject = event.streams[0];
+            };
+
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit("ice-candidate", event.candidate);
+                }
+            };
+
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socket.emit("offer", offer);
+        }
+
+        socket.on("offer", async (offer) => {
+            peerConnection = new RTCPeerConnection(config);
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localVideo.srcObject = stream;
+            stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            socket.emit("answer", answer);
+        });
+    </script>
 </body>
 </html>
+`);
