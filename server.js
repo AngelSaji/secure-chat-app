@@ -15,7 +15,10 @@ const io = new Server(server, {
 });
 
 // Connect to MongoDB
-mongoose.connect("mongodb+srv://<your-mongodb-uri>", { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log("Connected to MongoDB"))
+    .catch(err => console.error("MongoDB connection error:", err));
+
 const Message = mongoose.model("Message", new mongoose.Schema({ sender: String, content: String, iv: String }));
 
 // Serve static files (frontend)
