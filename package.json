@@ -1,20 +1,14 @@
 {
-    "name": "secure-chat-app",
-    "version": "1.0.0",
-    "description": "A secure chat application with video and voice calling using WebRTC and Socket.io",
-    "main": "server.js",
-    "scripts": {
-      "start": "node server.js"
-    },
-    "dependencies": {
-      "express": "^4.18.2",
-      "socket.io": "^4.5.4",
-      "cors": "^2.8.5"
-    },
-    "engines": {
-      "node": ">=14.0.0"
-    },
-    "author": "Your Name",
-    "license": "MIT"
+  "name": "secure-chat-app",
+  "version": "1.0.0",
+  "description": "A secure chat app with video calling",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "cors": "^2.8.5"
   }
-  
+}
